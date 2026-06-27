@@ -58,6 +58,7 @@ term.Resize(100, 30)
 - [Architettura](docs/architettura.md)
 - [Contratto del terminale](docs/contratto.md)
 - [ANSI supportato](docs/ansi.md)
+- [Release v0.1.1](docs/release-v0.1.1.md)
 
 ## Limiti
 
