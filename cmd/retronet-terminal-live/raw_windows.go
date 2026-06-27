@@ -28,22 +28,27 @@ func enterConsoleRaw(input *os.File, output *os.File) (func() error, error) {
 	rawInputMode &^= enableProcessedInput | enableLineInput | enableEchoInput
 	rawInputMode |= enableVirtualTerminalInput
 	if err := setConsoleMode(inputHandle, rawInputMode); err != nil {
-		return nil, err
+		rawInputMode &^= enableVirtualTerminalInput
+		if fallbackErr := setConsoleMode(inputHandle, rawInputMode); fallbackErr != nil {
+			return nil, err
+		}
 	}
 
 	outputHandle := syscall.Handle(output.Fd())
 	var outputMode uint32
-	outputModeOK := syscall.GetConsoleMode(outputHandle, &outputMode) == nil
-	if outputModeOK {
-		_ = setConsoleMode(outputHandle, outputMode|enableProcessedOutput|enableVirtualTerminalProcessing)
+	if err := syscall.GetConsoleMode(outputHandle, &outputMode); err != nil {
+		_ = setConsoleMode(inputHandle, inputMode)
+		return nil, err
+	}
+	if err := setConsoleMode(outputHandle, outputMode|enableProcessedOutput|enableVirtualTerminalProcessing); err != nil {
+		_ = setConsoleMode(inputHandle, inputMode)
+		return nil, err
 	}
 
 	return func() error {
 		err := setConsoleMode(inputHandle, inputMode)
-		if outputModeOK {
-			if outputErr := setConsoleMode(outputHandle, outputMode); err == nil {
-				err = outputErr
-			}
+		if outputErr := setConsoleMode(outputHandle, outputMode); err == nil {
+			err = outputErr
 		}
 		return err
 	}, nil

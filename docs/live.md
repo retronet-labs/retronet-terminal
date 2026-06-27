@@ -34,8 +34,14 @@ go run ./cmd/retronet-terminal-live -width 100 -height 30
 - `Ctrl+Q`, `Ctrl+C` o `Ctrl+D`: esce
 
 Quando possibile, il comando entra in raw mode: i tasti vengono letti subito,
-senza aspettare Invio. Se la console non supporta raw mode, il comando continua
-in modalita' linea.
+senza aspettare Invio. Se la console non supporta raw mode, il comando si ferma
+con un messaggio esplicito. In quel caso conviene avviarlo da PowerShell o
+Windows Terminal; per una prova non interattiva si puo' usare `-script`, oppure
+`-line` per una modalita' a righe meno fedele.
+
+Il live non ridisegna tutto lo schermo a ogni tasto: invia alla console solo i
+nuovi byte prodotti dal core terminale. Questo rende stabile il prompt `READY>`
+e riduce lo sfarfallio.
 
 ## Modalita' Script
 

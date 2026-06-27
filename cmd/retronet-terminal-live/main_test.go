@@ -25,15 +25,33 @@ func TestRunScriptRendersLiveScreen(t *testing.T) {
 
 func TestHandleByteControls(t *testing.T) {
 	term := terminal.New(terminal.Config{Width: 12, Height: 3, ANSI: true})
+	state := &liveState{term: term}
 	for _, value := range []byte{'A', 'B', '\b', 'C'} {
-		if !handleByte(term, value) {
+		if !state.handleByte(value) {
 			t.Fatalf("unexpected stop")
 		}
 	}
 	if got := term.Snapshot().Rows[0]; got != "AC          " {
 		t.Fatalf("row=%q", got)
 	}
-	if handleByte(term, 0x11) {
+	if state.handleByte(0x11) {
 		t.Fatalf("Ctrl+Q should stop")
+	}
+}
+
+func TestWriteDeltaDrainsRawOutput(t *testing.T) {
+	term := terminal.New(terminal.Config{Width: 12, Height: 3, ANSI: true})
+	state := &liveState{term: term}
+	_ = state.handleByte('A')
+	_ = state.handleByte('B')
+	var stdout bytes.Buffer
+	if err := writeDelta(&stdout, term); err != nil {
+		t.Fatal(err)
+	}
+	if got := stdout.String(); got != "AB" {
+		t.Fatalf("delta=%q", got)
+	}
+	if term.Snapshot().OutputBytes != 0 {
+		t.Fatalf("output not drained")
 	}
 }

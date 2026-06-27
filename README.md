@@ -72,6 +72,7 @@ term.Resize(100, 30)
 - [Contratto del terminale](docs/contratto.md)
 - [Terminale live](docs/live.md)
 - [ANSI supportato](docs/ansi.md)
+- [Release v0.2.1](docs/release-v0.2.1.md)
 - [Release v0.2.0](docs/release-v0.2.0.md)
 - [Release v0.1.1](docs/release-v0.1.1.md)
 
