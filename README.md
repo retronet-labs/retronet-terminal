@@ -32,15 +32,32 @@ _ = term.WriteByte(value)
 fmt.Println(term.OutputString())
 ```
 
+Snapshot e delta output per adattatori:
+
+```go
+snapshot := term.Snapshot()   // righe, cursore, dimensioni
+delta := term.DrainOutput()   // nuovi byte raw, poi buffer svuotato
+term.Resize(100, 30)
+```
+
 ## Stato
 
 - coda input byte-oriented
 - output raw bufferizzato
+- snapshot stabile per UI/websocket
+- drain del buffer raw
 - schermo testuale 80x24 di default
+- resize dello schermo
 - CR, LF, backspace, tab e wrapping
-- ANSI CSI minimo: clear screen, home/cursor position, clear line, attributi
-  colore ignorati ma preservati nel buffer raw
+- ANSI CSI minimo: clear screen/line, home/cursor position, movimento cursore,
+  attributi colore ignorati ma preservati nel buffer raw
 - CLI demo locale
+
+## Documentazione
+
+- [Architettura](docs/architettura.md)
+- [Contratto del terminale](docs/contratto.md)
+- [ANSI supportato](docs/ansi.md)
 
 ## Limiti
 

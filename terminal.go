@@ -22,6 +22,18 @@ type Config struct {
 	ANSI   bool
 }
 
+// Snapshot e' una vista immutabile dello stato utile a UI e websocket.
+// Rows contiene righe a larghezza fissa; CursorRow/CursorCol sono zero-based.
+type Snapshot struct {
+	Width        int      `json:"width"`
+	Height       int      `json:"height"`
+	Rows         []string `json:"rows"`
+	CursorRow    int      `json:"cursor_row"`
+	CursorCol    int      `json:"cursor_col"`
+	PendingInput int      `json:"pending_input"`
+	OutputBytes  int      `json:"output_bytes"`
+}
+
 // Terminal mantiene una coda input, un buffer output raw e uno schermo testuale.
 type Terminal struct {
 	mu     sync.Mutex
@@ -132,6 +144,34 @@ func (t *Terminal) OutputString() string {
 	return string(t.OutputBytes())
 }
 
+// DrainOutput restituisce e svuota il buffer raw.
+func (t *Terminal) DrainOutput() []byte {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	data := append([]byte(nil), t.output.Bytes()...)
+	t.output.Reset()
+	return data
+}
+
+// Snapshot restituisce una vista coerente dello stato corrente.
+func (t *Terminal) Snapshot() Snapshot {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	rows := make([]string, len(t.screen))
+	for i, row := range t.screen {
+		rows[i] = string(row)
+	}
+	return Snapshot{
+		Width:        t.config.Width,
+		Height:       t.config.Height,
+		Rows:         rows,
+		CursorRow:    t.row,
+		CursorCol:    t.col,
+		PendingInput: len(t.input),
+		OutputBytes:  t.output.Len(),
+	}
+}
+
 // ScreenString restituisce il contenuto visibile, senza spazi finali di riga.
 func (t *Terminal) ScreenString() string {
 	t.mu.Lock()
@@ -141,6 +181,36 @@ func (t *Terminal) ScreenString() string {
 		lines[i] = strings.TrimRight(string(row), " ")
 	}
 	return strings.Join(lines, "\n")
+}
+
+// Resize cambia dimensioni allo schermo preservando il contenuto visibile in
+// alto a sinistra e clampando il cursore dentro i nuovi limiti.
+func (t *Terminal) Resize(width int, height int) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if width <= 0 {
+		width = DefaultWidth
+	}
+	if height <= 0 {
+		height = DefaultHeight
+	}
+	next := make([][]byte, height)
+	for i := range next {
+		next[i] = blankLine(width)
+	}
+	rows := minInt(height, len(t.screen))
+	for r := 0; r < rows; r++ {
+		copy(next[r], t.screen[r])
+	}
+	t.config.Width = width
+	t.config.Height = height
+	t.screen = next
+	if t.row >= height {
+		t.row = height - 1
+	}
+	if t.col >= width {
+		t.col = width - 1
+	}
 }
 
 // Reset svuota input, output, parser ANSI e schermo.
@@ -232,19 +302,59 @@ func (t *Terminal) handleEscape(seq string) {
 	if !strings.HasPrefix(seq, "\x1b[") {
 		return
 	}
-	body := strings.TrimSuffix(strings.TrimPrefix(seq, "\x1b["), seq[len(seq)-1:])
+	body := seq[2 : len(seq)-1]
 	final := seq[len(seq)-1]
 	switch final {
 	case 'J':
-		if body == "2" || body == "" {
-			t.clearScreen()
-		}
+		t.eraseDisplay(parseCSIInt(body, 0))
 	case 'K':
-		t.clearLine()
+		t.eraseLine(parseCSIInt(body, 0))
 	case 'H', 'f':
 		t.moveCursor(body)
+	case 'A':
+		t.moveRelative(-parseCSIInt(body, 1), 0)
+	case 'B':
+		t.moveRelative(parseCSIInt(body, 1), 0)
+	case 'C':
+		t.moveRelative(0, parseCSIInt(body, 1))
+	case 'D':
+		t.moveRelative(0, -parseCSIInt(body, 1))
 	case 'm':
 		// Attributi colore/stile ignorati: il buffer e' testuale.
+	}
+}
+
+func (t *Terminal) eraseDisplay(mode int) {
+	switch mode {
+	case 0:
+		t.eraseLine(0)
+		for r := t.row + 1; r < t.config.Height; r++ {
+			t.screen[r] = blankLine(t.config.Width)
+		}
+	case 1:
+		for r := 0; r < t.row; r++ {
+			t.screen[r] = blankLine(t.config.Width)
+		}
+		for c := 0; c <= t.col && c < t.config.Width; c++ {
+			t.screen[t.row][c] = ' '
+		}
+	case 2:
+		t.clearScreen()
+	}
+}
+
+func (t *Terminal) eraseLine(mode int) {
+	switch mode {
+	case 0:
+		for i := t.col; i < t.config.Width; i++ {
+			t.screen[t.row][i] = ' '
+		}
+	case 1:
+		for i := 0; i <= t.col && i < t.config.Width; i++ {
+			t.screen[t.row][i] = ' '
+		}
+	case 2:
+		t.screen[t.row] = blankLine(t.config.Width)
 	}
 }
 
@@ -263,6 +373,25 @@ func (t *Terminal) moveCursor(body string) {
 	if len(parts) == 2 {
 		col = parseCSIInt(parts[1], 1) - 1
 	}
+	if row < 0 {
+		row = 0
+	}
+	if col < 0 {
+		col = 0
+	}
+	if row >= t.config.Height {
+		row = t.config.Height - 1
+	}
+	if col >= t.config.Width {
+		col = t.config.Width - 1
+	}
+	t.row = row
+	t.col = col
+}
+
+func (t *Terminal) moveRelative(deltaRow int, deltaCol int) {
+	row := t.row + deltaRow
+	col := t.col + deltaCol
 	if row < 0 {
 		row = 0
 	}
@@ -298,6 +427,13 @@ func escapeComplete(seq []byte) bool {
 		return true
 	}
 	return len(seq) >= 3 && seq[len(seq)-1] >= 0x40 && seq[len(seq)-1] <= 0x7E
+}
+
+func minInt(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func blankLine(width int) []byte {

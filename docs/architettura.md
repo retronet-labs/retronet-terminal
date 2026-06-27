@@ -12,6 +12,7 @@ programma / emulatore / BBS
         +-- input queue
         +-- output raw
         +-- screen buffer
+        +-- snapshot
 ```
 
 Il modulo non importa emulatori, CP/M, API web o componenti UI. Gli adattatori
@@ -22,6 +23,7 @@ vivono nei repo che ne hanno bisogno.
 - Il terminale non conosce registri CPU, porte I/O o funzioni BDOS.
 - Il buffer raw conserva i byte scritti, compresi escape ANSI.
 - Lo schermo testuale interpreta solo un subset ANSI generico.
+- `Snapshot` e `DrainOutput` sono il contratto pensato per CLI e websocket.
 - Websocket e xterm.js saranno adattatori futuri, non dipendenze del core.
 
 ## Copyright
