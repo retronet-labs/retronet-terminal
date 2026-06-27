@@ -18,12 +18,26 @@ programma / emulatore / BBS
 Il modulo non importa emulatori, CP/M, API web o componenti UI. Gli adattatori
 vivono nei repo che ne hanno bisogno.
 
+## Adattatori CLI
+
+`cmd/retronet-terminal` e' una demo deterministica: scrive byte, stampa raw output
+o schermo e termina. `cmd/retronet-terminal-live` e' invece un adattatore
+interattivo locale: mette la console in raw mode quando il sistema lo permette,
+legge tasti byte per byte, applica input, backspace e piccoli controlli, poi
+ridisegna lo snapshot del core con sequenze ANSI generiche.
+
+Il comando live non cambia il core: usa `Terminal.Write`, `Snapshot` e il parser
+ANSI gia presenti. Questo e' importante per il futuro websocket, perche' la UI
+web potra' usare lo stesso contratto senza duplicare la logica dello schermo.
+
 ## Confini
 
 - Il terminale non conosce registri CPU, porte I/O o funzioni BDOS.
 - Il buffer raw conserva i byte scritti, compresi escape ANSI.
 - Lo schermo testuale interpreta solo un subset ANSI generico.
 - `Snapshot` e `DrainOutput` sono il contratto pensato per CLI e websocket.
+- Il live CLI e' un adattatore locale sopra lo snapshot, non una dipendenza del
+  core.
 - Websocket e xterm.js saranno adattatori futuri, non dipendenze del core.
 
 ## Copyright

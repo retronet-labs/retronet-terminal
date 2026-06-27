@@ -20,7 +20,19 @@ CR/LF, stato dello schermo e piccoli escape ANSI. Separarlo rende il terminale:
 ```powershell
 go test ./...
 go run ./cmd/retronet-terminal -demo -screen
+go run ./cmd/retronet-terminal-live
 ```
+
+Terminale live:
+
+```powershell
+go run ./cmd/retronet-terminal-live -demo
+go run ./cmd/retronet-terminal-live -width 100 -height 30
+go run ./cmd/retronet-terminal-live -script "CIAO`r`nREADY"
+```
+
+Nel terminale live: scrivi testo, usa Backspace per cancellare, `Ctrl+L` per
+pulire lo schermo, `Ctrl+Q` o `Ctrl+C` per uscire.
 
 API minima:
 
@@ -48,6 +60,7 @@ term.Resize(100, 30)
 - drain del buffer raw
 - schermo testuale 80x24 di default
 - resize dello schermo
+- CLI live con raw mode quando disponibile
 - CR, LF, backspace, tab e wrapping
 - ANSI CSI minimo: clear screen/line, home/cursor position, movimento cursore,
   attributi colore ignorati ma preservati nel buffer raw
@@ -57,7 +70,9 @@ term.Resize(100, 30)
 
 - [Architettura](docs/architettura.md)
 - [Contratto del terminale](docs/contratto.md)
+- [Terminale live](docs/live.md)
 - [ANSI supportato](docs/ansi.md)
+- [Release v0.2.0](docs/release-v0.2.0.md)
 - [Release v0.1.1](docs/release-v0.1.1.md)
 
 ## Limiti
@@ -66,6 +81,7 @@ term.Resize(100, 30)
 - Non include font, terminfo, ROM o documentazione storica proprietaria.
 - Non implementa ancora websocket: il core e' pronto per essere adattato da
   `retronet-api`.
+- Il comando live e' una sandbox locale: non avvia ancora CP/M o BBS da solo.
 
 ## Licenza
 
