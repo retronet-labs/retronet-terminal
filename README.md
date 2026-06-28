@@ -34,6 +34,22 @@ go run ./cmd/retronet-terminal-live -script "CIAO`r`nREADY"
 Nel terminale live: scrivi testo, usa Backspace per cancellare, `Ctrl+L` per
 pulire lo schermo, `Ctrl+Q` o `Ctrl+C` per uscire.
 
+Terminale collegato a `retronet-api`:
+
+```powershell
+# in un altro terminale:
+# cd C:\work\source\retronet-api
+# go run ./cmd/retronet-api -addr 127.0.0.1:8080
+
+go run ./cmd/retronet-terminal-api -api http://127.0.0.1:8080
+```
+
+Modalita' a righe, utile quando raw mode non e' disponibile:
+
+```powershell
+go run ./cmd/retronet-terminal-api -api http://127.0.0.1:8080 -line
+```
+
 API minima:
 
 ```go
@@ -77,6 +93,7 @@ traduce i tasti in comandi della propria sessione.
 - resize dello schermo
 - CLI live con raw mode quando disponibile
 - package `live` riusabile da CP/M-like, BBS e futura API
+- CLI `retronet-terminal-api` per collegarsi al WebSocket di `retronet-api`
 - CR, LF, backspace, tab e wrapping
 - ANSI CSI minimo: clear screen/line, home/cursor position, movimento cursore,
   attributi colore ignorati ma preservati nel buffer raw
@@ -87,7 +104,9 @@ traduce i tasti in comandi della propria sessione.
 - [Architettura](docs/architettura.md)
 - [Contratto del terminale](docs/contratto.md)
 - [Terminale live](docs/live.md)
+- [Terminale API](docs/api.md)
 - [ANSI supportato](docs/ansi.md)
+- [Release v0.4.0](docs/release-v0.4.0.md)
 - [Release v0.2.1](docs/release-v0.2.1.md)
 - [Release v0.3.0](docs/release-v0.3.0.md)
 - [Release v0.2.0](docs/release-v0.2.0.md)
@@ -97,8 +116,8 @@ traduce i tasti in comandi della propria sessione.
 
 - Non e' un VT100 completo.
 - Non include font, terminfo, ROM o documentazione storica proprietaria.
-- Non implementa ancora websocket: il core e' pronto per essere adattato da
-  `retronet-api`.
+- Il core non apre websocket direttamente: il trasporto vive
+  nell'adapter `cmd/retronet-terminal-api`.
 - Il comando live e' una sandbox locale: non avvia ancora CP/M o BBS da solo.
 
 ## Licenza

@@ -42,9 +42,9 @@ delta := term.DrainOutput()
 _ = delta // byte da inviare a una CLI o websocket
 ```
 
-## Uso Futuro Con Websocket
+## Uso Con Websocket
 
-Un server websocket puo' usare due flussi:
+Un server o client websocket puo' usare due flussi:
 
 - client -> server: tasti o byte ricevuti dal browser, accodati con
   `QueueInput`
@@ -53,6 +53,10 @@ Un server websocket puo' usare due flussi:
 
 Il core terminale resta indipendente dal trasporto: non apre socket, non parla
 HTTP e non importa librerie UI.
+
+Da v0.4.0 il comando `retronet-terminal-api` applica questo contratto al
+protocollo di `retronet-api`: legge tasti dalla console host, invia messaggi
+JSON `input` e stampa i messaggi JSON `output` ricevuti dal server.
 
 ## Licenze E Provenienza
 

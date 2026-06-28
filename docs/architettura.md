@@ -20,10 +20,16 @@ programma / emulatore / BBS
         +-- rendering snapshot
         +-- delta output
         +-- handler applicativo
+
+ retronet-terminal-api
+        |
+        +-- WebSocket client minimale
+        +-- input host -> messaggi input
+        +-- output API -> stdout raw
 ```
 
-Il modulo non importa emulatori, CP/M, API web o componenti UI. Gli adattatori
-vivono nei repo che ne hanno bisogno.
+Il core terminale non importa emulatori, CP/M, API web o componenti UI. Gli
+adattatori vivono nei comandi o nei repo che ne hanno bisogno.
 
 ## Adattatori CLI
 
@@ -43,6 +49,12 @@ Da v0.3.0 la parte riusabile vive nel package `live`. Il comando
 `retronet-cpm` puo' trasformare Invio in `session.RunCommand`, Backspace in echo
 locale e `Ctrl+L` in pulizia schermo.
 
+Da v0.4.0 `cmd/retronet-terminal-api` collega la console host a
+`retronet-api`: i tasti diventano messaggi websocket `input`, mentre i messaggi
+`output` dell'API vengono scritti direttamente su stdout. Questo comando e' un
+adapter di trasporto: non cambia il core `Terminal` e non introduce dipendenze
+esterne.
+
 ## Confini
 
 - Il terminale non conosce registri CPU, porte I/O o funzioni BDOS.
@@ -52,7 +64,9 @@ locale e `Ctrl+L` in pulizia schermo.
 - Il live CLI e' un adattatore locale sopra lo snapshot, non una dipendenza del
   core.
 - Il package `live` non conosce CP/M, BBS o API: conosce solo un handler di byte.
-- Websocket e xterm.js saranno adattatori futuri, non dipendenze del core.
+- Websocket e xterm.js sono adattatori, non dipendenze del core.
+- Il client websocket usa solo libreria standard Go e il protocollo JSON di
+  `retronet-api`.
 
 ## Copyright
 
