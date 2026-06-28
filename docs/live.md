@@ -4,6 +4,11 @@
 `terminal.Terminal`. Serve per giocare con lo schermo RetroNet senza avviare
 ancora CP/M, BBS o websocket.
 
+La logica riusabile vive nel package Go
+`github.com/retronet-labs/retronet-terminal/live`: il comando locale usa quel
+runner con un handler dimostrativo, mentre `retronet-cpm` e `retronet-api`
+possono fornire handler diversi.
+
 ## Avvio
 
 Dal repository:
@@ -64,6 +69,33 @@ Il live CLI dimostra quattro elementi del contratto:
 - il renderer esterno puo' essere sostituito in futuro da websocket/xterm.js
 - raw mode e repaint sono adattatori, non logica del core terminale
 
+## Uso Come Package
+
+Un repo applicativo fornisce un handler:
+
+```go
+type Handler interface {
+    Start(term *terminal.Terminal) error
+    HandleByte(term *terminal.Terminal, value byte) (bool, error)
+}
+```
+
+Poi avvia il runner:
+
+```go
+err := live.Run(live.Config{
+    Input:   os.Stdin,
+    Output:  os.Stdout,
+    Raw:     true,
+    Handler: handler,
+})
+```
+
+`Start` scrive lo stato iniziale sul terminale. `HandleByte` riceve un byte alla
+volta e restituisce `false` quando la sessione deve terminare. Il runner si
+occupa di raw mode, rendering iniziale dello snapshot, `DrainOutput` dopo ogni
+tasto e ripristino della console.
+
 ## Limiti
 
 - non e' un VT100 completo
@@ -72,5 +104,5 @@ Il live CLI dimostra quattro elementi del contratto:
 - non apre socket
 - non include ROM, font, terminfo, manuali o asset storici proprietari
 
-La prossima integrazione naturale e' collegare questo modello a
-`retronet-cpm/session` e poi a `retronet-api`.
+La prossima integrazione naturale e' usare questo modello in
+`retronet-cpm/session` e poi in `retronet-api`.

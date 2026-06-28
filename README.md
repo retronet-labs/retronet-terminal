@@ -52,6 +52,21 @@ delta := term.DrainOutput()   // nuovi byte raw, poi buffer svuotato
 term.Resize(100, 30)
 ```
 
+Runner live riusabile:
+
+```go
+err := live.Run(live.Config{
+    Input:   os.Stdin,
+    Output:  os.Stdout,
+    Raw:     true,
+    Handler: handler,
+})
+```
+
+Il package `live` gestisce raw mode, rendering dello snapshot, output a delta e
+modalita' scriptata. I repo come `retronet-cpm` forniscono solo l'handler che
+traduce i tasti in comandi della propria sessione.
+
 ## Stato
 
 - coda input byte-oriented
@@ -61,6 +76,7 @@ term.Resize(100, 30)
 - schermo testuale 80x24 di default
 - resize dello schermo
 - CLI live con raw mode quando disponibile
+- package `live` riusabile da CP/M-like, BBS e futura API
 - CR, LF, backspace, tab e wrapping
 - ANSI CSI minimo: clear screen/line, home/cursor position, movimento cursore,
   attributi colore ignorati ma preservati nel buffer raw
@@ -73,6 +89,7 @@ term.Resize(100, 30)
 - [Terminale live](docs/live.md)
 - [ANSI supportato](docs/ansi.md)
 - [Release v0.2.1](docs/release-v0.2.1.md)
+- [Release v0.3.0](docs/release-v0.3.0.md)
 - [Release v0.2.0](docs/release-v0.2.0.md)
 - [Release v0.1.1](docs/release-v0.1.1.md)
 

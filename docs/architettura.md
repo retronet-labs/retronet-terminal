@@ -13,6 +13,13 @@ programma / emulatore / BBS
         +-- output raw
         +-- screen buffer
         +-- snapshot
+
+ live.Run
+        |
+        +-- raw mode host
+        +-- rendering snapshot
+        +-- delta output
+        +-- handler applicativo
 ```
 
 Il modulo non importa emulatori, CP/M, API web o componenti UI. Gli adattatori
@@ -30,6 +37,12 @@ Il comando live non cambia il core: usa `Terminal.Write`, `Snapshot` e il parser
 ANSI gia presenti. Questo e' importante per il futuro websocket, perche' la UI
 web potra' usare lo stesso contratto senza duplicare la logica dello schermo.
 
+Da v0.3.0 la parte riusabile vive nel package `live`. Il comando
+`cmd/retronet-terminal-live` fornisce solo un handler dimostrativo con prompt
+`READY>`, mentre altri repo possono passare handler propri. Per esempio
+`retronet-cpm` puo' trasformare Invio in `session.RunCommand`, Backspace in echo
+locale e `Ctrl+L` in pulizia schermo.
+
 ## Confini
 
 - Il terminale non conosce registri CPU, porte I/O o funzioni BDOS.
@@ -38,6 +51,7 @@ web potra' usare lo stesso contratto senza duplicare la logica dello schermo.
 - `Snapshot` e `DrainOutput` sono il contratto pensato per CLI e websocket.
 - Il live CLI e' un adattatore locale sopra lo snapshot, non una dipendenza del
   core.
+- Il package `live` non conosce CP/M, BBS o API: conosce solo un handler di byte.
 - Websocket e xterm.js saranno adattatori futuri, non dipendenze del core.
 
 ## Copyright
