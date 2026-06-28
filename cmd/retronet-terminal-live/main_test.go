@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	terminal "github.com/retronet-labs/retronet-terminal"
+	"github.com/retronet-labs/retronet-terminal/live"
 )
 
 func TestRunScriptRendersLiveScreen(t *testing.T) {
@@ -25,27 +26,35 @@ func TestRunScriptRendersLiveScreen(t *testing.T) {
 
 func TestHandleByteControls(t *testing.T) {
 	term := terminal.New(terminal.Config{Width: 12, Height: 3, ANSI: true})
-	state := &liveState{term: term}
+	handler := &localHandler{}
 	for _, value := range []byte{'A', 'B', '\b', 'C'} {
-		if !state.handleByte(value) {
+		keepRunning, err := handler.HandleByte(term, value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !keepRunning {
 			t.Fatalf("unexpected stop")
 		}
 	}
 	if got := term.Snapshot().Rows[0]; got != "AC          " {
 		t.Fatalf("row=%q", got)
 	}
-	if state.handleByte(0x11) {
+	keepRunning, err := handler.HandleByte(term, 0x11)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if keepRunning {
 		t.Fatalf("Ctrl+Q should stop")
 	}
 }
 
 func TestWriteDeltaDrainsRawOutput(t *testing.T) {
 	term := terminal.New(terminal.Config{Width: 12, Height: 3, ANSI: true})
-	state := &liveState{term: term}
-	_ = state.handleByte('A')
-	_ = state.handleByte('B')
+	handler := &localHandler{}
+	_, _ = handler.HandleByte(term, 'A')
+	_, _ = handler.HandleByte(term, 'B')
 	var stdout bytes.Buffer
-	if err := writeDelta(&stdout, term); err != nil {
+	if err := live.WriteDelta(&stdout, term); err != nil {
 		t.Fatal(err)
 	}
 	if got := stdout.String(); got != "AB" {

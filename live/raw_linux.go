@@ -1,6 +1,6 @@
 //go:build linux
 
-package main
+package live
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"unsafe"
 )
 
-func enterConsoleRaw(input *os.File, output *os.File) (func() error, error) {
+func EnterConsoleRaw(input *os.File, output *os.File) (func() error, error) {
 	fd := uintptr(input.Fd())
 	var original syscall.Termios
 	if err := ioctl(fd, syscall.TCGETS, uintptr(unsafe.Pointer(&original))); err != nil {

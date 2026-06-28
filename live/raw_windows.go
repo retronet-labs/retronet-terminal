@@ -1,6 +1,6 @@
 //go:build windows
 
-package main
+package live
 
 import (
 	"os"
@@ -18,7 +18,7 @@ const (
 
 var procSetConsoleMode = syscall.NewLazyDLL("kernel32.dll").NewProc("SetConsoleMode")
 
-func enterConsoleRaw(input *os.File, output *os.File) (func() error, error) {
+func EnterConsoleRaw(input *os.File, output *os.File) (func() error, error) {
 	inputHandle := syscall.Handle(input.Fd())
 	var inputMode uint32
 	if err := syscall.GetConsoleMode(inputHandle, &inputMode); err != nil {
